@@ -17,7 +17,7 @@ This work is supported by Nation Institute of Health, NIH/NIDCD grant R01DC01543
     - [Wide Dynamic Range Compression](#wide-dynamic-range-compression)
     - [Automatic Feedback Control](#automatic-feedback-control)
     - [Speech Enhancement](#speech-enhancement)
-    - [RTMHA Performance](#rt-mha-performance) 
+    - [RTMHA Performance](#rt-mha-performance)
   - [User Device Software](#user-device-software)
 - [**OSP Installation**](#osp-installation)
   - [**Basic Installation**](#basic-installation)
@@ -26,6 +26,7 @@ This work is supported by Nation Institute of Health, NIH/NIDCD grant R01DC01543
     - [Initial Test - 1](#initial-test---1)
     - [(Optional) Initial Test – 2 with Zoom tac-8](#optional-initial-test--2-with-zoom-tac-8)
   - [Changing Filter Coefficients](#changing-the-filter-coefficients)
+  - [Setting Up the Web Server](#setting-up-the-embedded-web-server)
   - [Using the Tablet Mode:](#using-the-tablet-mode)
     - [Setting Up Mac's Wi-fi](#setting-up-macs-wifi)
     - [Setting Up Android](#setting-up-android)
@@ -140,7 +141,7 @@ Cohen & Berdugo MCRA Procedure parameters:
 1. Threshold for P[speech] (δ)= 10
 
 ### RT-MHA Performance
-In Table 1, we present performance of RT-MHA compared with 3 commercial HAs from Opticon (open sound experience – opn, Alta2, and Sensei). These are high-end, high-end and mid-level HAs, respectively, from Oticon. Based on the results, we conclude that RT-MHA performance is comparable to that of commercial HAs. 
+In Table 1, we present performance of RT-MHA compared with 3 commercial HAs from Opticon (open sound experience – opn, Alta2, and Sensei). These are high-end, high-end and mid-level HAs, respectively, from Oticon. Based on the results, we conclude that RT-MHA performance is comparable to that of commercial HAs.
 
 ![Table 1](images/Table1.png)
 **Table 1:** Performance of RT-MHA as compared with commercial HAs.
@@ -178,7 +179,7 @@ The user device software is implemented above TCP/IP layer in a software stack c
 
 ![audio midi location](images/ospinstallation/5_finder-audiomidi.png)
 
-**6. Select primary input:** In Audio MIDI Setup, right-click (CTRL+click) Built-in Microphone on the left hand side. Select "Use This Device For Sound Input." 
+**6. Select primary input:** In Audio MIDI Setup, right-click (CTRL+click) Built-in Microphone on the left hand side. Select "Use This Device For Sound Input."
 
 **7. Select primary output:** In Audio MIDI Setup, right-click (CTRL+click) Built-in Output on the left hand side. Select "Use This Device For Sound Output."
 
@@ -272,11 +273,11 @@ With the OSP project open in Xcode, you can run the program with different optio
 
 **NOTE: If the '-t' (TCP daemon mode) flag is* NOT *supplied, the application will start in keyboard-input mode**. In this mode, many parameters can be changed on-the-fly from keyboard inputs while the program is running. To change the parameters, simply enter the values below (one at a time followed by the enter key) in the same terminal the osp-exe program was run from.  
 
-- **g <gain_value>**: If the operator chooses to adjust the gain to 10dB, he/she can simply enter 'g 10' followed by Enter on the command line. 
+- **g <gain_value>**: If the operator chooses to adjust the gain to 10dB, he/she can simply enter 'g 10' followed by Enter on the command line.
 
 - **s**: If the operator wants to turn on/off AFC, he/she can simply enter 's' followed by enter to toggle AFC mode.
 
-- **p <spectral_subtraction_parameter>** If the operator chooses to adjust the spectral subtraction to 0.5, he/she can simply enter 'p 0.5' followed by Enter on the command line. The range for spectral subtraction parameter is from 0 to 1. 
+- **p <spectral_subtraction_parameter>** If the operator chooses to adjust the spectral subtraction to 0.5, he/she can simply enter 'p 0.5' followed by Enter on the command line. The range for spectral subtraction parameter is from 0 to 1.
 
 - **c** to save the converged afc filter coefficients.
 
@@ -289,9 +290,141 @@ With the OSP project open in Xcode, you can run the program with different optio
 2.	By default we have set the filterback coefficients to Kates filters. You can access Boothroyd filterbanks in r01-osp-xcode/osp/Boothroyd Filters.
 3.	Also you can define your own filterbanks in flt format and save them in r01-osp-xcode/osp/filter_coefficients to test them.
 
+
+### Setting Up the Embedded Web Server
+
+# Setting up
+
+## Intalling Laravel
+First you must install [composer](https://getcomposer.org/download/) and make sure to have npm and PHP installed.
+
+Next, you can run these commands inside the root directory of the Laravel application to install the application:
+
+1. `composer install`
+2. `cp .env.example .env`
+3. `php artisan key:generate`
+4. `npm install react`
+5. `npm install react-dom`
+6. `npm install`
+7. `npm run dev`
+
+After this, to run locally you can use PHP's development server, and initialize a socket to communicate with the MHA (on two separate terminal windows):
+
+1. `php artisan serve` (by default this serves on localhost:8000, you can change the port number with the option: --port=____)
+2. `php artisan socket:start` (make sure to run this command after osp is already running)
+
+Alternatively, you can set up Laravel to be served via Apache, in which case only the second command from above needs to be run. Apache is already preinstalled on macOS, and can be installed with `sudo apt-get install apache2` on linux-based systems. Once installed you need to edit the config files in Apache so it serves the /public directory in the Laravel application. Once this is done, the only thing left to be able to connect remotely is ensuring you have read/write permissions on the /storage and /bootstrap/cache directories.
+
+To open the applications, connect via the browser at localhost:8000 if running on php's development server, or type your ip address into a browser if running on Apache.
+
+## Intalling NAL-NL2 extension
+For NAL-NL2 to work, you must install a custom PHP extension. To do so follow these steps:
+
+1. copy '../resources/nalnl2_extension/nalnl2extension.so' into your PHP extension directory
+2. copy '../resources/nalnl2_extension/nalnl2extension.ini' into your PHP ini directory
+
+
+## Learning Laravel
+The [Laravel documentation](https://laravel.com/docs) is thorough, complete, and makes it easy to get started learning the framework. Please refer to this if you are having trouble with Laravel.
+
+
+# Testing Instructions
+
+## Researcher page
+
+1.  Local:  localhost:8000/researcherpage; Apache: IP_ADDRESS/researcherpage
+2.  Add at least 5db to each cell in the the G65 row
+3.  Press transmit and listen to the sound that plays
+4.  Make another change, let’s say removing those 5db and listen again
+5.  As soon as you have heard a difference between two parameter states, you can be sure that the software is working as intended.
+
+
+
+## Nalnl2
+
+1.  Local:  localhost:8000/nalnl2; Apache: IP_ADDRESS/nalnl2
+2.  Start out by filling out some dummy information into the provided form
+3.  Enter the PTA for a person with flat heating loss and press get parameters
+4.  Make sure that the parameters populate the table below
+5.  Now, change the PTA to have sloping loss and press get parameters
+6.  Confirm that the parameters have actually changed by visually comparing the table to its state in step 2.
+7.  Once you have seen the difference, you can be sure the app is running as intended
+
+
+
+## 4AFC
+
+
+1.  Local:  localhost:8000/4afc; Apache: IP_ADDRESS/4afc
+2.  Click on the four choices and the play symbol and make sure you are hearing the appropriate word
+3.  Once you hear the words playing on click, you know that the 4AFC app is working properly
+
+
+
+# API
+
+## Connecting
+Logging into osp manually
+
+POST request on .../api/connect
+
+required body:
+
+```
+{
+	"URI": string
+}
+```
+
+* where URI is the login info you want to use
+
+
+## Updating Parameters
+POST request on .../api/params
+
+required body:
+
+```
+{
+	"noOp": int,
+	"afc": int,
+	"feedback": int,
+	"rear": int,
+	"g50": [int,int,int,int,int,int],
+	"g80": [int,int,int,int,int,int],
+	"kneelow": [int,int,int,int,int,int],
+	"mpoLimit": [int,int,int,int,int,int],
+	"attackTime": [int,int,int,int,int,int],
+	"releaseTime": [int,int,int,int,int,int]
+}
+```
+
+
+## Playing sound
+POST request on ../api/4afc
+
+required body:
+
+```
+{
+	"Word_set": int
+	"Actual_answer": int
+}
+```
+
+* where wordset is the path corresponding to the directory in the resources/sounds directory, and actual_answer is the path corresponding to the sound file in that directory.
+
+## Disconnect
+
+To manually log off (you may need to reinitialize socket connection after this)
+
+POST request on .../api/disconnect
+
+* there is no required body
+
 ### Setting Up Mac's Wi-Fi
 1. Wi-Fi dongle – EDUP – DB 1607
-	1. Download the appropriate dongle drivers from the website: 
+	1. Download the appropriate dongle drivers from the website:
 	http://www.szedup.com/support/driver-download/ep-db1607-driver/
 	2. In Finder, navigate to your the downloaded folder (usually in Downloads)
 	3. Double-click Installer.pkg
@@ -299,7 +432,7 @@ With the OSP project open in Xcode, you can run the program with different optio
 	5. Restart the Macbook.
 	6. Click the USB Wi-Fi icon in the menu bar (at the top of your screen) and connect to your preferred Wi-Fi network.
 	7. On the menu bar, click the Apple icon and open System Preferences.
-	8. In System Preferences, go to Sharing > Internet Sharing 
+	8. In System Preferences, go to Sharing > Internet Sharing
 	9. In the “Share your connection from” field, select the USB dongle (in our case, the 802.11ac WLAN adapter)
 	10. In the “To Computer using” field, select the Wi-Fi.
 	11. Select Wi-Fi options. Change the network name for a desired (arbitrary) network name, and create a password for this network. This created network will be used to connect the tablet to the Macbook.
@@ -312,12 +445,12 @@ With the OSP project open in Xcode, you can run the program with different optio
     - We have also provided the Android app project in the OSP folder. You can customize and build the app, then port it to the android device using an Android IDE.
 
 ### Working with the Android Application
-1. Run the code with `–t` parameter enabled. 
+1. Run the code with `–t` parameter enabled.
 2. Connect the android device to the Wi-Fi network that you defined while installing the Wi-Fi dongle.
 3. The app should auto-fill the IP address of the Mac, if it fails enter: ”192.168.2.1”.
 4. Enter the Researcher initials and the User initials.
 5. Change the parameters in the researcher page.
-6. Click transmit, the values would be loaded to the Mac. 
+6. Click transmit, the values would be loaded to the Mac.
 7. The logs would be created in the same project folder.
 
 - Changing the location of logs
@@ -330,7 +463,7 @@ With the OSP project open in Xcode, you can run the program with different optio
 
 - Format of log files
 
-	Raw data from android app has the following format: 
+	Raw data from android app has the following format:
 	[date, pageName, ButtonName, CrispnessMultipliers, FullnessStepSize, VolumeStepSize, CrispnessStepSize, FullnessLevel, VolumeLevel, CrispnessLevel, FullnessValue, VolumeValue, CrispnessValue, CompressionRatio, g50, g65, g80, KneeLow, MPOLimit, AttackTime, ReleaseTime]
 
 
@@ -359,10 +492,10 @@ This section describes the use of Jelly beans JBv5 and Breakout Board (BoB v5)
 
 ![BoBv5](images/bobv5.png)
 
-1. **USB B-Micro** : Takes a standard USB supply of 5V as an alternative to battery power. If using battery power, DISCONNECT THE USB CABLE. 
+1. **USB B-Micro** : Takes a standard USB supply of 5V as an alternative to battery power. If using battery power, DISCONNECT THE USB CABLE.
 2. **Power source selector** : Switch to the left for battery power, to the right for USB power. Use a USB source from the Verifit or a computer, NOT from a 2-prong wall-outlet-adapter. EIN from a floating-ground USB source can be substantial (45dB+).
 3. **Power switch** : Left for ON, right for OFF.
-4. **Low Battery LED**: This LED will turn on (RED) if the battery voltage drops below 3V. The bottom side of the box must be removed to replace the batteries (3xAAA). 
+4. **Low Battery LED**: This LED will turn on (RED) if the battery voltage drops below 3V. The bottom side of the box must be removed to replace the batteries (3xAAA).
 5. **Power on LED** : This LED will turn on (GREEN) if power is supplied to the board. If using battery power, the LED will turn OFF in the case of low battery, and the RED led will turn on.
 6. **Boost enable/bypass**: Left for ENABLE, Right for BYPASS. Bypass should only be used if an extremely sensitive digital measurement is occurring in battery mode. The switching effect of the boost regulator is not audible in normal operation.
 7. **Right volume adjust** : Logarithmic potentiometer, clockwise to increase volume. This knob does NOT affect the gain of the microphone
@@ -373,7 +506,7 @@ signal coming from the JB.
 11. **3x TRS jack to ZT8** : See next page.
 12. **Left output limiting LEDs**: Will turn on as output voltage becomes dangerously high. Can be disabled.
 13. **CS44 adapter to Left JB** : #1 towards the front of the device. #2 towards the back. Match with marks on the adapter PCB.
-14. **Left loopback selector** : Left for INTERNAL loopback (fully analog, front mic only). Right for EXTERNAL loopback (via ZT8 + DSP software). 
+14. **Left loopback selector** : Left for INTERNAL loopback (fully analog, front mic only). Right for EXTERNAL loopback (via ZT8 + DSP software).
 15. **Left volume adjust** : Logarithmic potentiometer, clockwise to increase volume. This knob does NOT affect the gain of the microphone signal coming from the JB.
 16. **Battery pack** : Takes 3 standard AA alkaline cells.
 17. **Stereo volume adjust**: Logarithmic potentiometer, clockwise to increase volume. This knob adjusts the output level of both JB equally.
@@ -381,7 +514,7 @@ signal coming from the JB.
 ![BoBv5](images/bob_connect.png)
 
 1. Left Front Mic differential output
-2. Left and Right Receiver single-ended inputs 
+2. Left and Right Receiver single-ended inputs
 3. Right Front Mic differential output
 
 All outputs are 0V DC biased.
@@ -438,7 +571,7 @@ The following files have been included with R01 OSP-MATLAB release:
 	- Column 5: release times for the 6 bands.
 	- Column 6: lower kneepoints for the 6 bands.
 	- Column 7: upper kneepoints for the 6 bands.
-	
+
 3.	Feedback Paths: 26 feedback paths provided from Prof. James Kates of University of Colorado Boulder have been included. The feedback path impulse responses were recorded using real hearing aid devices put on an “EDDI” acoustic manikin. The sampling frequency was 15.625 kHz. Each feedback path was measured from a particular scenario and can be identified by its file name:
 
 	- Earmold: 0=leaky unvented, 1=tight fit unvented, 2=vented
@@ -495,4 +628,3 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 13. Cohen, Israel, and Baruch Berdugo. "Noise estimation by minima controlled recursive averaging for robust speech enhancement." IEEE signal processing letters 9.1 (2002): 12-15.
 
 14. Lee, Ching-Hua, Bhaskar D. Rao, and Harinath Garudadri. "Sparsity promoting LMS for adaptive feedback cancellation". In Signal Processing Conference (EUSIPCO), 2017 25th European, pp. 226-230. IEEE, 2017.
-
